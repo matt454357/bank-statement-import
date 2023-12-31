@@ -145,6 +145,7 @@ class OnlineBankStatementProvider(models.Model):
             }
 
     def _pull(self, date_since, date_until):
+        date_until = date_until.replace(hour=0, minute=0, second=0, microsecond=0)
         is_scheduled = self.env.context.get("scheduled")
         for provider in self:
             statement_date_since = provider._get_statement_date_since(date_since)
@@ -339,9 +340,10 @@ class OnlineBankStatementProvider(models.Model):
         # NOTE: Statement date is treated by Odoo as start of period. Details
         #  - addons/account/models/account_journal_dashboard.py
         #  - def get_line_graph_datas()
+        # The above note appears to be mistaken
         tz = timezone(self.tz) if self.tz else utc
-        date_since = date_since.replace(tzinfo=utc).astimezone(tz)
-        return date_since.date()
+        date_until = date_until.replace(tzinfo=utc).astimezone(tz)
+        return date_until.date()
 
     def _get_next_run_period(self):
         self.ensure_one()
