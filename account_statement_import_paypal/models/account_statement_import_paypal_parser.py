@@ -203,13 +203,17 @@ class AccountBankStatementImportPayPalParser(models.TransientModel):
         note = "{} {}".format(description, transaction_id)
         if details:
             note += ": %s" % details
+        if payer_name:
+            note += " [%s]" % payer_name
+        narration = note
         if payer_email:
-            note += " (%s)" % payer_email
+            narration += " (%s)" % payer_email
 
         unique_import_id = "{}-{}".format(transaction_id, int(timestamp.timestamp()))
-        name = (invoice or details or description or "",)
+        ref = invoice or details or description or ""
         transaction = {
-            "name": invoice or details or description or "",
+            "ref": ref,
+            'narration': narration,
             "amount": str(gross_amount),
             "date": timestamp,
             "payment_ref": note,
@@ -222,9 +226,10 @@ class AccountBankStatementImportPayPalParser(models.TransientModel):
         transactions.append(transaction)
 
         if fee_amount:
+            fee_note = "{} {} [PayPal]".format(description, transaction_id)
             transactions.append(
                 {
-                    "name": _("Fee for %s") % (name or transaction_id),
+                    "ref": "Fee for %s" % (ref or transaction_id),
                     "amount": str(fee_amount),
                     "date": timestamp,
                     "partner_name": "PayPal",
